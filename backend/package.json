@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node fra-project.js",
+    "dev": "nodemon fra-project.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,5 +17,8 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "mysql2": "^3.24.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }
