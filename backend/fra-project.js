@@ -39,9 +39,10 @@ app.get('/test-db', async (req, res) => {
 });
 
 // ================== Risk Analysis Route ==================
-app.get('/api/risk/:companyId', async (req, res) => {
+app.post('/api/companies/:companyId/analyze', async (req, res) => {
   try {
     const companyId = Number(req.params.companyId);
+    const lang = req.query.lang === 'ar' ? 'ar' : 'en';
 
     // 1. Complaint risk needs ALL companies' complaints (for min/max normalization)
     const [allComplaints] = await db.query(
@@ -49,7 +50,7 @@ app.get('/api/risk/:companyId', async (req, res) => {
     );
 
     const companyStats = aggregateComplaintsByCompany(allComplaints);
-    const allComplaintScores = calculateComplaintRiskScores(companyStats);
+    const allComplaintScores = calculateComplaintRiskScores(companyStats, lang);
     const complaintResult = allComplaintScores.find((c) => c.company_id === companyId);
 
     if (!complaintResult) {
@@ -68,10 +69,25 @@ app.get('/api/risk/:companyId', async (req, res) => {
 
     const current = financialRows[0];
     const previous = financialRows.length > 1 ? financialRows[1] : null;
-    const financialResult = calculateFinancialRisk(current, previous);
+    const financialResult = calculateFinancialRisk(current, previous, lang);
 
     // 3. Combine
-    const overallResult = calculateOverallRisk(complaintResult, financialResult);
+    const overallResult = calculateOverallRisk(complaintResult, financialResult, lang);
+
+    // 4. Persist the freshly computed scores back onto the company row,
+    //    so the dashboard cards/badges reflect this run instead of stale data.
+    await db.query(
+      `UPDATE companies
+       SET complaint_risk = ?, financial_risk = ?, overall_risk = ?, risk_level = ?, last_scored_at = NOW()
+       WHERE id = ?`,
+      [
+        complaintResult.complaint_risk_score,
+        financialResult.financial_risk_score,
+        overallResult.overall_risk_score,
+        overallResult.overall_risk_level,
+        companyId,
+      ]
+    );
 
     res.json({
       company_id: companyId,
