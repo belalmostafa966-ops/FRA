@@ -1,0 +1,3 @@
+company_id,complaint_risk_score,complaint_risk_level,financial_score,financial_level,overall_risk_score,overall_risk_level,early_warning
+19,61.06,Medium,68.12,High,64.59,Medium,EARLY WARNING: High financial risk (68.12).
+13,73.1,High,25.62,Low,49.36,Medium,EARLY WARNING: High complaint risk (73.10).
